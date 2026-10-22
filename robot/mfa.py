@@ -39,14 +39,16 @@ def take_code(source: str) -> str | None:
 
 
 def _notify(source: str) -> None:
+    """Immediate email; same dedupe key as the hourly worker, so it is never sent twice."""
     try:
-        from workers.gmail_reader import send_email
+        from app.db import alert_settings
+        from workers.alerts import mfa_alert
 
-        send_email(f"Card Offers: {source} needs a security code",
-                   f"{source} sent you a security code. Enter it on the Accounts page "
-                   "within 10 minutes.")
+        with session() as s:
+            if alert_settings(s).get("mfa_needed"):
+                mfa_alert(s)
     except Exception as e:  # email is best-effort; the UI pill shows needs_code anyway
-        log.warning("MFA email not sent (%s)", type(e).__name__)
+        log.warning("MFA email not sent (%s: %s)", source, type(e).__name__)
 
 
 def wait_for_code(run_id: int, source: str, timeout: float = 600, interval: float = 5,
