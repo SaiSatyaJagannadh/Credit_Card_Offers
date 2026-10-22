@@ -48,8 +48,12 @@ def active_offers(s: Session, on: date | None = None) -> list[Offer]:
 
 
 def offers_for_merchant(s: Session, merchant_name: str, on: date | None = None) -> list[Offer]:
+    """Exact match first; else partial ("uber" finds "Uber Eats")."""
     n = norm(merchant_name)
-    return [o for o in active_offers(s, on) if norm(o.merchant_name) == n]
+    offers = active_offers(s, on)
+    exact = [o for o in offers if norm(o.merchant_name) == n]
+    return exact or [o for o in offers if n and (n in norm(o.merchant_name)
+                                                  or norm(o.merchant_name) in n)]
 
 
 def cap_used_now(s: Session, on: date | None = None) -> dict[str, float]:
