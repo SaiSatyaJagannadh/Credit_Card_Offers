@@ -426,3 +426,10 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# Card Offers app
+.streamlit/secrets.toml
+*.db
+token*.json
+credentials.json
+robot_profile/

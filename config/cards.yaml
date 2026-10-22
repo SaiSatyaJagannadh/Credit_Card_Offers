@@ -1,0 +1,85 @@
+# Base rewards per card. Store only names and last digits — never full card numbers.
+# Rates are decimals (0.03 = 3%). Categories: groceries, online, gas, dining, travel,
+# wholesale, drugstores, entertainment, home_improvement, other.
+cards:
+  - id: amex_bce
+    name: Blue Cash Everyday
+    issuer: American Express
+    last_digits: "92006"
+    offers_program: Amex Offers
+    offers_url: https://global.americanexpress.com/offers/eligible
+    base_rate: 0.01
+    categories:
+      groceries: {rate: 0.03, cap: amex_groceries}
+      online: {rate: 0.03, cap: amex_online}
+      gas: {rate: 0.03, cap: amex_gas}
+    caps:
+      amex_groceries: {label: "U.S. supermarkets 3%", limit: 6000, period: year}
+      amex_online: {label: "U.S. online retail 3%", limit: 6000, period: year}
+      amex_gas: {label: "U.S. gas 3%", limit: 6000, period: year}
+    monthly_credits: []   # e.g. [{name: "Disney+ credit", amount: 7}]
+
+  - id: bofa_ccr
+    name: Customized Cash Rewards
+    issuer: Bank of America
+    last_digits: ""       # TODO: fill in last 4
+    offers_program: BankAmeriDeals
+    offers_url: https://secure.bankofamerica.com/customer-deals/
+    base_rate: 0.01
+    choice_category: online   # 3% choice: gas, online, dining, travel, drugstores, home_improvement
+    categories:
+      choice: {rate: 0.03, cap: bofa_quarter}
+      groceries: {rate: 0.02, cap: bofa_quarter}
+      wholesale: {rate: 0.02, cap: bofa_quarter}
+    caps:
+      bofa_quarter: {label: "3% + 2% combined", limit: 2500, period: quarter}
+    monthly_credits: []
+
+  - id: wf_visa_sig
+    name: Visa Signature
+    issuer: Wells Fargo
+    last_digits: ""       # TODO
+    offers_program: Wells Fargo Deals
+    offers_url: https://connect.secure.wellsfargo.com/accounts/start
+    base_rate: 0.01
+    categories: {}        # TODO: confirm bonus categories
+    caps: {}
+    monthly_credits: []
+
+  - id: discover_it
+    name: Discover it
+    issuer: Discover
+    last_digits: ""       # TODO
+    offers_program: null
+    offers_url: https://card.discover.com/cardmembersvcs/rewards/app/home
+    base_rate: 0.01
+    rotating:             # quarter -> categories; set activated: true once activated
+      "2026Q4": {categories: [online, wholesale], activated: false}
+    rotating_rate: 0.05
+    categories: {}
+    caps:
+      discover_rotating: {label: "5% rotating", limit: 1500, period: quarter}
+    monthly_credits: []
+
+  - id: verizon_visa
+    name: Verizon Visa
+    issuer: Synchrony
+    last_digits: ""       # TODO
+    offers_program: null
+    offers_url: null
+    base_rate: 0.01
+    categories: {}        # TODO
+    caps: {}
+    monthly_credits: []
+
+  - id: apple_card
+    name: Apple Card
+    issuer: Apple
+    last_digits: ""       # TODO
+    offers_program: null
+    offers_url: null
+    base_rate: 0.02       # 2% with Apple Pay (assumed); 1% with the physical card
+    note: "2% assumes Apple Pay"
+    categories: {}
+    caps: {}
+    monthly_credits: []

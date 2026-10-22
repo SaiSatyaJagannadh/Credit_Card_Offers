@@ -1,0 +1,33 @@
+timezone: America/New_York
+grades: {A: 40, B: 15}          # max value thresholds in $; else C
+credit_due_days: 21
+stale_hours: 48
+you_shop_here_days: 180
+inactive_card_days: 90
+digest_hour: 8
+quiet_hours: {start: 22, end: 7}
+fuzzy_threshold: 90
+llm:
+  max_chars: 6000                 # email text is truncated to this before the LLM
+alert_defaults:
+  new_high_value: true
+  high_value_min: 20             # one of 5/10/20/50
+  expiry_3day: true
+  mfa_needed: true
+  credit_posted: true
+  credit_overdue: true
+  rotating_reminder: true
+  watchlist_match: true
+  weekly_summary: false
+  monthly_recap: true
+bank_senders:
+  - americanexpress.com
+  - aexp.com
+  - bankofamerica.com
+  - ealerts.bankofamerica.com
+  - wellsfargo.com
+  - discover.com
+  - synchronybank.com
+  - synchrony.com
+  - apple.com
+  - goldmansachs.com

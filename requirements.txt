@@ -1,0 +1,15 @@
+streamlit>=1.42
+Authlib>=1.3.2
+sqlalchemy>=2.0
+alembic>=1.13
+psycopg[binary]>=3.2
+pydantic>=2.7
+pyyaml>=6.0
+rapidfuzz>=3.9
+openai>=1.40
+altair>=5.3
+pandas>=2.2
+requests>=2.32
+google-api-python-client>=2.130
+google-auth-oauthlib>=1.2
+beautifulsoup4>=4.12
