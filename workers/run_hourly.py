@@ -63,6 +63,12 @@ def main(now: datetime | None = None) -> int:
     try:
         done, left = sync_gmail()
         msg = f"{done} emails" + (f", {left} queued for next run" if left else "")
+    except Exception as e:
+        status, msg = "error", error_message(e)
+        expected = isinstance(e, gmail_reader.GmailNotConnected) or msg.startswith("Gmail token")
+        log.error(msg, exc_info=not expected)  # no traceback for known, user-fixable errors
+    # Robot offers need expiry, watchdog and alerts even when Gmail reading is off or broken.
+    try:
         with session() as s:
             match.expire_offers(s)
             insights.create_expected_credits(s)
@@ -70,9 +76,9 @@ def main(now: datetime | None = None) -> int:
             sent = alerts.check(s, now)
         msg += f", {len(sent)} alerts sent"
     except Exception as e:
-        status, msg = "error", error_message(e)
-        expected = isinstance(e, gmail_reader.GmailNotConnected) or msg.startswith("Gmail token")
-        log.error(msg, exc_info=not expected)  # no traceback for known, user-fixable errors
+        status = "error"
+        msg += f"; alerts failed: {error_message(e)}"
+        log.exception("alerts failed")
     with session() as s:
         r = s.get(SyncRun, run_id)
         r.status, r.message, r.finished_at = status, msg, utcnow()
