@@ -22,7 +22,7 @@ cards:
   - id: bofa_ccr
     name: Customized Cash Rewards
     issuer: Bank of America
-    last_digits: ""       # TODO: fill in last 4
+    last_digits: ""       # optional; emails fall back to the issuer (one card per bank)
     offers_program: BankAmeriDeals
     offers_url: https://secure.bankofamerica.com/customer-deals/
     base_rate: 0.01
@@ -38,18 +38,18 @@ cards:
   - id: wf_visa_sig
     name: Visa Signature
     issuer: Wells Fargo
-    last_digits: ""       # TODO
+    last_digits: ""       # optional; emails fall back to the issuer (one card per bank)
     offers_program: Wells Fargo Deals
     offers_url: https://connect.secure.wellsfargo.com/accounts/start
     base_rate: 0.01
-    categories: {}        # TODO: confirm bonus categories
+    categories: {}        # 1% on everything; add bonus categories here if the card has any
     caps: {}
     monthly_credits: []
 
   - id: discover_it
     name: Discover it
     issuer: Discover
-    last_digits: ""       # TODO
+    last_digits: ""       # optional; emails fall back to the issuer (one card per bank)
     offers_program: null
     offers_url: https://card.discover.com/cardmembersvcs/rewards/app/home
     base_rate: 0.01
@@ -64,18 +64,18 @@ cards:
   - id: verizon_visa
     name: Verizon Visa
     issuer: Synchrony
-    last_digits: ""       # TODO
+    last_digits: ""       # optional; emails fall back to the issuer (one card per bank)
     offers_program: null
     offers_url: null
     base_rate: 0.01
-    categories: {}        # TODO
+    categories: {}        # 1% on everything; add bonus categories here if the card has any
     caps: {}
     monthly_credits: []
 
   - id: apple_card
     name: Apple Card
     issuer: Apple
-    last_digits: ""       # TODO
+    last_digits: ""       # optional; emails fall back to the issuer (one card per bank)
     offers_program: null
     offers_url: null
     base_rate: 0.02       # 2% with Apple Pay (assumed); 1% with the physical card
