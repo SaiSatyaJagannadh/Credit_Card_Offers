@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Replace REPO_PATH (absolute repo path). Install: see README.md -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.cardoffers.robot-poll</string>
+  <key>WorkingDirectory</key><string>REPO_PATH</string>
+  <!-- Optional if REPO_PATH/.streamlit/secrets.toml already has DATABASE_URL -->
+  <key>EnvironmentVariables</key>
+  <dict><key>DATABASE_URL</key><string>DATABASE_URL_HERE</string></dict>
+  <key>ProgramArguments</key>
+  <array>
+    <string>REPO_PATH/.venv/bin/python</string>
+    <string>-m</string><string>robot.runner</string><string>--poll</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>60</integer>
+  <key>StandardOutPath</key><string>/tmp/com.cardoffers.robot-poll.log</string>
+  <key>StandardErrorPath</key><string>/tmp/com.cardoffers.robot-poll.log</string>
+</dict>
+</plist>

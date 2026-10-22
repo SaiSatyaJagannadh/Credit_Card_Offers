@@ -1,0 +1,30 @@
+{
+  "status": "OK",
+  "data": {
+    "offers": [
+      {
+        "offer_id": "A1",
+        "name": "Dell Technologies",
+        "short_description": "Spend $300 or more, get $60 back",
+        "expiry_date": "2026-10-31",
+        "status": "ELIGIBLE",
+        "terms": "Online only at dell.com."
+      },
+      {
+        "offerId": "A2",
+        "merchant": {"name": "Under Armour"},
+        "description": "Earn 20% back on purchases, up to a total of $10",
+        "expirationDate": "11/08/2026",
+        "status": "ENROLLED"
+      },
+      {
+        "id": "A3",
+        "merchantName": "Hilton",
+        "headline": "Spend $250+, earn 5,000 Membership Rewards points",
+        "endDate": 1798675200000,
+        "enrolled": false
+      },
+      {"name": "Promo banner", "description": "See all offers"}
+    ]
+  }
+}
