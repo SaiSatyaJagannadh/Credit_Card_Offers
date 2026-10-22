@@ -11,16 +11,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - id: cfg  # skip quietly until secrets are added (README step 6)
+        run: if [ -n "$DATABASE_URL" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "::notice::DATABASE_URL secret not set; skipping"; fi
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - if: steps.cfg.outputs.ok == 'true'
+        uses: actions/checkout@v4
+      - if: steps.cfg.outputs.ok == 'true'
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -r requirements.txt
-      - run: alembic upgrade head
+      - if: steps.cfg.outputs.ok == 'true'
+        run: pip install -r requirements.txt
+      - if: steps.cfg.outputs.ok == 'true'
+        run: alembic upgrade head
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      - run: python -m workers.run_monthly
+      - if: steps.cfg.outputs.ok == 'true'
+        run: python -m workers.run_monthly
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
