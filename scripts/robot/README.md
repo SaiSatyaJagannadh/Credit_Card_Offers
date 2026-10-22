@@ -6,9 +6,11 @@ Two jobs: a daily 7 AM run (`--once`) and an always-on poller (`--poll`, checks
 Placeholders: `REPO_PATH` = absolute path of this repo, `VENV_PY` = `REPO_PATH/.venv/bin/python`
 (Windows: `REPO_PATH\.venv\Scripts\python.exe`), `DATABASE_URL_HERE` = the Supabase URL.
 
-First, once per bank: `VENV_PY -m robot.setup amex` (saves the login to the OS keychain and
-optionally opens the browser so you can log in and trust the device). Test with
-`VENV_PY -m robot.runner --once --bank amex --headed`.
+First, once per bank (`amex`, `bofa`, `wellsfargo`): `VENV_PY -m robot.setup amex` (saves the
+login to the OS keychain and optionally opens the browser so you can log in and trust the
+device). Test each with `VENV_PY -m robot.runner --once --bank bofa --headed`. With no `--bank`,
+the robot runs all three in turn, one login each; a bank with no saved login just records an
+error and the others still run.
 
 ## macOS (launchd)
 

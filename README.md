@@ -7,7 +7,7 @@ tells me which card to pay with, and emails me before offers expire.
 |---|---|---|
 | `app/` | Streamlit Community Cloud | UI: Dashboard, Search/Ask, Cards & credits, Insights, Watchlist, Alerts, Accounts. Google login (`st.login`), one allowed email. |
 | `workers/` | GitHub Actions (hourly + monthly) | Gmail reader → LLM extraction → matching/dedupe → credit watchdog → alerts/emails. |
-| `robot/` | My home computer | Playwright bank robot (Amex first): logs in, captures the offers JSON, handles security codes through the DB. |
+| `robot/` | My home computer | Playwright bank robot (Amex, BofA, Wells Fargo): logs in, captures the offers JSON, handles security codes through the DB. |
 | DB | Supabase Postgres (free) | SQLAlchemy 2 + Alembic. Local dev uses SQLite. |
 
 Streamlit Cloud sleeps, so nothing scheduled lives in the app. The hourly workflow also keeps
@@ -100,12 +100,14 @@ for this repo only with **Actions: Read and write**, and put it in the Streamlit
 `GITHUB_TOKEN` (`GITHUB_REPO` = `owner/repo`). It also inserts a `refresh_requests` row that the
 home robot picks up.
 
-### 7. Home robot (Amex)
+### 7. Home robot (Amex, BofA, Wells Fargo)
 See `scripts/robot/README.md` for launchd / cron / Task Scheduler. In short:
 
 ```sh
 uv pip install -r requirements-robot.txt && .venv/bin/playwright install chromium
 .venv/bin/python -m robot.setup amex          # login → OS keychain, then log in once in the browser
+.venv/bin/python -m robot.setup bofa          # same for BankAmeriDeals
+.venv/bin/python -m robot.setup wellsfargo    # same for Wells Fargo Deals
 .venv/bin/python -m robot.runner --once --bank amex --headed   # test
 ```
 
@@ -117,10 +119,12 @@ Then schedule `robot.runner --once` daily at 7 AM and `robot.runner --poll` alwa
 - When the bank asks for a security code, the status turns to "needs security code", you get an
   email, and you type the code on the **Accounts** page within 10 minutes. No code → the run fails
   gracefully and the previous offers stay.
-- Selectors and the offers-JSON URL pattern at the top of `robot/amex.py` need tuning against the
-  live site on the first run; raw payloads are stored in `raw_payloads` for that.
-- BofA and Wells Fargo robots are stubs (next phase). No automatic enrolling: "Add to card"
-  links to the bank's offers page.
+- Banks run one after another (`--once` with no `--bank` runs amex, bofa, wellsfargo), one login
+  each. Use `--bank bofa` / `--bank wellsfargo` to run one.
+- Selectors and the offers-JSON URL patterns at the top of `robot/amex.py`, `robot/bofa.py` and
+  `robot/wellsfargo.py` need tuning against the live sites on the first run; raw payloads are
+  stored in `raw_payloads` for that. If no JSON matches, the robot falls back to page text.
+- No automatic enrolling: "Add to card" links to the bank's offers page.
 
 ## Troubleshooting
 - **"Gmail token expired — reconnect on Accounts page"**: the consent screen was in *Testing*, or

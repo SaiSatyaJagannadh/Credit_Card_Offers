@@ -1,0 +1,12 @@
+{
+  "deals": {
+    "available": [
+      {"dealId": "B1", "merchantName": "Uber Eats", "dealDescription": "15% cash back",
+       "maxCashBack": "$7.50", "expirationDate": "11/14/2026", "status": "AVAILABLE"},
+      {"dealId": "B2", "merchant": {"displayName": "Home Depot"},
+       "offerTitle": "$10 cash back on a purchase of $50 or more",
+       "expiresOn": "2026-12-01", "activated": true}
+    ],
+    "banner": {"title": "BankAmeriDeals", "description": "Activate deals before you shop"}
+  }
+}

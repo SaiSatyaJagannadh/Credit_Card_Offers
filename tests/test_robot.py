@@ -6,10 +6,13 @@ import pytest
 
 from app.db import MfaCode, RefreshRequest, SyncRun, session, set_engine, utcnow
 from robot import mfa, runner
-from robot.amex import parse_amex_offers, parse_offer_card_text
-from robot.base import parse_offer_text
+from robot.amex import parse_amex_offers
+from robot.base import parse_offer_card_text, parse_offer_text
+from robot.bofa import parse_bofa_offers
+from robot.wellsfargo import parse_wellsfargo_offers
 
-FIXTURE = Path(__file__).parent / "fixtures" / "amex_offers.json"
+FIXTURES = Path(__file__).parent / "fixtures"
+FIXTURE = FIXTURES / "amex_offers.json"
 
 
 @pytest.mark.parametrize("text,expected", [
@@ -22,6 +25,9 @@ FIXTURE = Path(__file__).parent / "fixtures" / "amex_offers.json"
      dict(type="pct", pct=10, min_spend=50, max_credit=1000)),
     ("Spend $250+, earn 5,000 Membership Rewards points",
      dict(type="points", fixed_amount=5000, min_spend=250)),
+    ("$5 cash back on a purchase of $25 or more",
+     dict(type="fixed", fixed_amount=5, min_spend=25)),
+    ("Earn 10% cash back up to $15", dict(type="pct", pct=10, max_credit=15, min_spend=None)),
     ("Shop now and enjoy", None),
 ])
 def test_parse_offer_text(text, expected):
@@ -49,6 +55,30 @@ def test_parse_offer_card_text_dom_fallback():
     o = parse_offer_card_text("Lyft\nEarn 10% back, up to a total of $15\nExpires 12/1/26\nAdded")
     assert (o.merchant, o.pct, o.max_credit, o.expires_on, o.enrolled) == (
         "Lyft", 10, 15, date(2026, 12, 1), True)
+
+
+def test_parse_bofa_offers_fixture():
+    offers = {o.merchant: o for o in parse_bofa_offers(
+        json.loads((FIXTURES / "bofa_offers.json").read_text()))}
+    assert set(offers) == {"Uber Eats", "Home Depot"}
+    ue, hd = offers["Uber Eats"], offers["Home Depot"]
+    assert (ue.type, ue.pct, ue.max_credit, ue.enrolled) == ("pct", 15, 7.5, False)
+    assert ue.expires_on == date(2026, 11, 14) and ue.source_message_id == "bofa:B1"
+    assert (hd.type, hd.fixed_amount, hd.min_spend, hd.enrolled) == ("fixed", 10, 50, True)
+    assert hd.expires_on == date(2026, 12, 1)
+
+
+def test_parse_wellsfargo_offers_fixture():
+    offers = {o.merchant: o for o in parse_wellsfargo_offers(
+        json.loads((FIXTURES / "wellsfargo_offers.json").read_text()))}
+    assert set(offers) == {"Lyft", "Chewy"}
+    lyft, chewy = offers["Lyft"], offers["Chewy"]
+    assert (lyft.type, lyft.pct, lyft.max_credit, lyft.enrolled) == ("pct", 10, 15, True)
+    assert lyft.expires_on == date(2026, 11, 16)
+    assert lyft.exclusions == "Lyft Pink membership excluded."
+    assert lyft.source_message_id == "wellsfargo:W1"
+    assert (chewy.type, chewy.fixed_amount, chewy.min_spend) == ("fixed", 8, 40)
+    assert chewy.expires_on == datetime.fromtimestamp(1797465600, UTC).date()
 
 
 @pytest.fixture
@@ -105,8 +135,8 @@ def test_poll_once_coalesces_requests(db):
         s.add_all([RefreshRequest(source="all"), RefreshRequest(source="amex"),
                    RefreshRequest(source="gmail")])
     calls = []
-    assert runner.poll_once(calls.append) == ["amex"]
-    assert calls == [["amex"]]
+    assert runner.poll_once(calls.append) == ["amex", "bofa", "wellsfargo"]
+    assert calls == [["amex", "bofa", "wellsfargo"]]
     with session() as s:
         reqs = {r.source: r for r in s.query(RefreshRequest)}
     assert reqs["all"].done_at and reqs["amex"].picked_up_at
@@ -157,7 +187,31 @@ def test_run_bank_saves_via_upsert_and_handles_errors(db, monkeypatch):
             == "ok"
     FakeRobot.offers = []
     assert not runner.run_bank("amex")
-    assert not runner.run_bank("bofa")  # stub -> NotImplementedError recorded, no crash
     with session() as s:
         last = s.query(SyncRun).order_by(SyncRun.id.desc()).first()
-    assert last.status == "error" and "Phase 5b" in last.message
+    assert last.status == "error" and "no offers found" in last.message
+
+
+@pytest.mark.parametrize("bank,card_id,issuer,parse,fixture,merchant", [
+    ("bofa", "bofa_ccr", "Bank of America", parse_bofa_offers, "bofa_offers.json", "Uber Eats"),
+    ("wellsfargo", "wf_visa_sig", "Wells Fargo", parse_wellsfargo_offers,
+     "wellsfargo_offers.json", "Lyft"),
+])
+def test_run_bank_bofa_wellsfargo(db, monkeypatch, bank, card_id, issuer, parse, fixture,
+                                  merchant):
+    import sys
+    import types
+
+    saved = []
+    fake_match = types.ModuleType("workers.match")
+    fake_match.upsert_offer = lambda s, iss, cid, o, source, ref: saved.append(
+        (iss, cid, o.merchant, source, ref))
+    monkeypatch.setitem(sys.modules, "workers.match", fake_match)
+    offers = parse(json.loads((FIXTURES / fixture).read_text()))
+    fake = type("Fake", (FakeRobot,), {"bank": bank, "card_id": card_id, "offers": offers})
+    monkeypatch.setitem(runner.BANKS, bank, fake)
+    assert runner.run_bank(bank)
+    assert saved[0] == (issuer, card_id, merchant, "robot", "raw_payload:7")
+    with session() as s:
+        last = s.query(SyncRun).order_by(SyncRun.id.desc()).first()
+    assert (last.source, last.status) == (bank, "ok")

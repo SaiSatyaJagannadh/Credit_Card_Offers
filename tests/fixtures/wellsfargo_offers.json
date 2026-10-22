@@ -1,0 +1,10 @@
+{
+  "data": [
+    {"offer_id": "W1", "merchant_name": "Lyft", "offer_headline": "Earn 10% cash back up to $15",
+     "end_date": "2026-11-16T23:59:59Z", "status": "ACTIVATED",
+     "terms": "Lyft Pink membership excluded."},
+    {"offer_id": "W2", "merchant_name": "Chewy", "offer_headline": "Spend $40, get $8 cash back",
+     "end_date": 1797465600, "status": "NEW"},
+    {"merchant_name": "Wells Fargo Deals", "offer_headline": "See how deals work"}
+  ]
+}

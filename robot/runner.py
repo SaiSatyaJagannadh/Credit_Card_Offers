@@ -22,7 +22,7 @@ log = logging.getLogger("robot")
 
 BANKS: dict[str, type[BaseBankRobot]] = {
     "amex": AmexRobot, "bofa": BofaRobot, "wellsfargo": WellsFargoRobot}
-DEFAULT_BANKS = ["amex"]  # add bofa/wellsfargo once their robots exist
+DEFAULT_BANKS = ["amex", "bofa", "wellsfargo"]  # sequential, one login each
 POLL_SECONDS = 120
 
 
