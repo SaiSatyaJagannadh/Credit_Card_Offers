@@ -23,6 +23,13 @@ log = logging.getLogger("robot")
 BANKS: dict[str, type[BaseBankRobot]] = {
     "amex": AmexRobot, "bofa": BofaRobot, "wellsfargo": WellsFargoRobot}
 DEFAULT_BANKS = ["amex", "bofa", "wellsfargo"]  # sequential, one login each
+
+
+def connected_banks() -> list[str]:
+    """Default banks with a saved login: an unconnected bank isn't an error every run."""
+    from robot.base import has_credentials
+
+    return [b for b in DEFAULT_BANKS if has_credentials(b)]
 POLL_SECONDS = 120
 
 
@@ -86,7 +93,7 @@ def poll_once(run: Callable[[list[str]], None] = run_banks) -> list[str]:
         ids = [r.id for r in reqs]
         banks: list[str] = []
         for r in reqs:
-            for b in DEFAULT_BANKS if r.source == "all" else [r.source]:
+            for b in connected_banks() if r.source == "all" else [r.source]:
                 if b not in banks:
                     banks.append(b)
     if not ids:
@@ -113,7 +120,7 @@ def main(argv: list[str] | None = None) -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     headless = not args.headed
     if not args.poll:
-        run_banks(args.bank or DEFAULT_BANKS, headless)
+        run_banks(args.bank or connected_banks(), headless)
         return
     while True:
         try:

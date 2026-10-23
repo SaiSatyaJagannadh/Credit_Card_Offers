@@ -130,7 +130,8 @@ def test_mfa_sets_needs_code_while_waiting(db):
     assert seen == ["needs_code"]
 
 
-def test_poll_once_coalesces_requests(db):
+def test_poll_once_coalesces_requests(db, monkeypatch):
+    monkeypatch.setattr(runner, "connected_banks", lambda: ["amex", "bofa", "wellsfargo"])
     with session() as s:
         s.add_all([RefreshRequest(source="all"), RefreshRequest(source="amex"),
                    RefreshRequest(source="gmail")])
@@ -215,3 +216,10 @@ def test_run_bank_bofa_wellsfargo(db, monkeypatch, bank, card_id, issuer, parse,
     with session() as s:
         last = s.query(SyncRun).order_by(SyncRun.id.desc()).first()
     assert (last.source, last.status) == (bank, "ok")
+
+
+def test_connected_banks_skips_banks_without_login(monkeypatch):
+    import robot.base
+
+    monkeypatch.setattr(robot.base, "has_credentials", lambda b: b == "amex")
+    assert runner.connected_banks() == ["amex"]

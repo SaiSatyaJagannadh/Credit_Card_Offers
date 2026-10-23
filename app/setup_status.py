@@ -20,7 +20,6 @@ class Step:
     status: str  # one short line of what the app sees right now
     how: str  # what to do, in plain words
     page: str = ""  # in-app page that fixes it
-    command: str = ""  # terminal command on the Mac, if any
 
 
 def steps(s: Session, logged_in: bool) -> list[Step]:
@@ -66,14 +65,19 @@ def steps(s: Session, logged_in: bool) -> list[Step]:
             "Not connected yet" if run is None else
             {"ok": f"Synced: {run.message}", "needs_code": "Waiting for a security code",
              "running": "Syncing now"}.get(run.status, f"Last try failed: {run.message[:120]}"),
-            f"Save your {name} login on your Mac (it stays in your Keychain), then do one "
-            "visible run. After that it runs every day at 7 AM by itself.",
-            page="views/accounts.py",
-            command=f".venv/bin/python -m robot.setup {src}\n"
-                    f".venv/bin/python -m robot.runner --once --bank {src} --headed"))
+            f"On your Mac, double-click Card Offers Helper in the project folder. Save your "
+            f"{name} login there (it stays in your Mac's Keychain), press Sync now, then "
+            "turn on automatic sync.",
+            page="views/accounts.py"))
     out.append(Step("offers", "First offers in", offers > 0,
                     f"{offers} offers saved" if offers else "No offers yet",
                     "Offers arrive from the bank robot and Gmail. You can also type one in.",
                     page="views/add.py"))
     return out
 
+
+
+def first_run(s: Session) -> bool:
+    """New here: no offers yet, or no card has its last digits. Start on Get started."""
+    has_offers = bool(s.scalar(select(Offer.id).limit(1)))
+    return not has_offers or not any(c.get("last_digits") for c in cards_config())

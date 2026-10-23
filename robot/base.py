@@ -166,8 +166,16 @@ def credentials(bank: str) -> tuple[str, str]:
     user = keyring.get_password(KEYRING_SERVICE, f"{bank}:username")
     pw = keyring.get_password(KEYRING_SERVICE, f"{bank}:password")
     if not user or not pw:
-        raise RuntimeError(f"No saved login for {bank} — run: python -m robot.setup {bank}")
+        raise RuntimeError(f"No saved login for {bank} — add it in the Card Offers helper")
     return user, pw
+
+
+def has_credentials(bank: str) -> bool:
+    try:
+        credentials(bank)
+        return True
+    except Exception:  # no login saved, or no keychain on this machine
+        return False
 
 
 def profile_dir(bank: str) -> Path:
