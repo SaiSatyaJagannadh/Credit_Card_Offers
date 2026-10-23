@@ -235,6 +235,27 @@ class BaseBankRobot(ABC):
             self.captured.append((row.id, data))
         log.info("%s: captured JSON payload %s", self.bank, row.id)
 
+    def settle(self, timeout: int = 10_000) -> None:
+        """Wait for the page to go quiet, but don't fail: bank pages (Amex) keep tracking
+        requests running forever, so "networkidle" alone never arrives."""
+        from playwright.sync_api import TimeoutError as PwTimeout
+
+        self.page.wait_for_load_state("domcontentloaded")
+        try:
+            self.page.wait_for_load_state("networkidle", timeout=timeout)
+        except PwTimeout:
+            pass
+
+    def visible(self, selector: str, timeout: int = 15_000) -> bool:
+        """True once selector shows up; False if it doesn't within timeout."""
+        from playwright.sync_api import TimeoutError as PwTimeout
+
+        try:
+            self.page.locator(selector).first.wait_for(state="visible", timeout=timeout)
+            return True
+        except PwTimeout:
+            return False
+
     def type_slowly(self, selector: str, text: str) -> None:
         loc = self.page.locator(selector).first
         loc.click()
@@ -265,9 +286,9 @@ class SelectorRobot(BaseBankRobot):
 
     def login(self) -> None:
         p = self.page
-        p.goto(self._offers_url())  # trusted profile may skip login
-        p.wait_for_load_state("networkidle")
-        if not p.locator(self.user_sel).first.is_visible():
+        p.goto(self._offers_url(), wait_until="domcontentloaded")  # trusted profile may skip login
+        self.settle()
+        if not self.visible(self.user_sel):
             return
         user, pw = credentials(self.bank)
         pause()
@@ -276,41 +297,41 @@ class SelectorRobot(BaseBankRobot):
         self.type_slowly(self.pass_sel, pw)
         pause()
         p.locator(self.submit_sel).first.click()
-        p.wait_for_load_state("networkidle")
+        self.settle(20_000)
         pause()
 
     def needs_mfa(self) -> bool:
         p = self.page
-        if p.locator(self.mfa_code_sel).first.is_visible():
+        if self.visible(self.mfa_code_sel, 5_000):
             return True
         method = p.locator(self.mfa_method_sel).first
         if method.is_visible():  # "how should we send your code?" step
             method.click()
-            p.wait_for_load_state("networkidle")
+            self.settle()
             pause()
-            return p.locator(self.mfa_code_sel).first.is_visible()
+            return self.visible(self.mfa_code_sel)
         return False
 
     def submit_mfa(self, code: str) -> None:
         pause()
         self.type_slowly(self.mfa_code_sel, code)
         self.page.keyboard.press("Enter")
-        self.page.wait_for_load_state("networkidle")
+        self.settle(20_000)
         pause()
 
     def fetch_offers(self) -> list[RobotOffer]:
         p = self.page
         url = self._offers_url()
         if not p.url.startswith(url):
-            p.goto(url)
-        p.wait_for_load_state("networkidle")
+            p.goto(url, wait_until="domcontentloaded")
+        self.settle(20_000)
         if self.deals_link_sel and (link := p.locator(self.deals_link_sel).first).is_visible():
             link.click()
-            p.wait_for_load_state("networkidle")
+            self.settle()
         pause()
         p.mouse.wheel(0, 4000)  # lazy-loaded lists
         pause()
-        p.wait_for_load_state("networkidle")
+        self.settle()
         offers = [o for _, data in self.captured for o in parse_offers(data, self.bank)]
         if not offers:
             log.warning("%s: no offers in captured JSON, falling back to DOM", self.bank)
