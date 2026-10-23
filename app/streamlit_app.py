@@ -61,18 +61,19 @@ with db.session() as s:
 
 st.navigation({
     "Offers": [
-        st.Page("pages/dashboard.py", title="Dashboard", default=True),
-        st.Page("pages/search.py", title="Best card / Ask"),
-        st.Page("pages/insights.py", title="Insights"),
-        st.Page("pages/cards_credits.py", title="Cards & credits"),
+        st.Page("views/dashboard.py", title="Dashboard", default=True),
+        st.Page("views/search.py", title="Best card / Ask"),
+        st.Page("views/insights.py", title="Insights"),
+        st.Page("views/cards_credits.py", title="Cards & credits"),
     ],
     "Enter details": [
-        st.Page("pages/add.py", title="Add & edit"),
-        st.Page("pages/my_cards.py", title="My cards"),
-        st.Page("pages/watchlist.py", title="Watchlist"),
+        st.Page("views/get_started.py", title="Get started"),
+        st.Page("views/add.py", title="Add & edit"),
+        st.Page("views/my_cards.py", title="My cards"),
+        st.Page("views/watchlist.py", title="Watchlist"),
     ],
     "Settings": [
-        st.Page("pages/accounts.py", title="Accounts"),
-        st.Page("pages/alerts.py", title="Alerts"),
+        st.Page("views/accounts.py", title="Accounts"),
+        st.Page("views/alerts.py", title="Alerts"),
     ],
 }).run()

@@ -6,9 +6,9 @@ from streamlit.testing.v1 import AppTest
 
 from app import config, db
 
-PAGES = ["pages/dashboard.py", "pages/search.py", "pages/cards_credits.py",
-         "pages/insights.py", "pages/watchlist.py", "pages/alerts.py", "pages/accounts.py",
-         "pages/add.py", "pages/my_cards.py"]
+PAGES = ["views/dashboard.py", "views/search.py", "views/cards_credits.py",
+         "views/insights.py", "views/watchlist.py", "views/alerts.py", "views/accounts.py",
+         "views/add.py", "views/my_cards.py", "views/get_started.py"]
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def test_page_renders(app, page):
 
 
 def test_search_best_card(app):
-    app.switch_page("pages/search.py").run()
+    app.switch_page("views/search.py").run()
     app.text_input(key="search_q").input("best card for $40 at Lyft?").run()
     assert not app.exception
     html = "".join(h.proto.body for h in app.get("html"))
@@ -45,7 +45,7 @@ def test_add_offer_and_card_digits(app):
     from app.config import card_by_id
     from app.db import Offer
 
-    app.switch_page("pages/add.py").run()
+    app.switch_page("views/add.py").run()
     app.text_input[0].input("Nike")
     app.number_input[0].set_value(10.0)
     app.number_input[1].set_value(15.0)
@@ -55,7 +55,7 @@ def test_add_offer_and_card_digits(app):
         nike = s.scalar(select(Offer).where(Offer.merchant_name == "Nike"))
     assert nike and nike.source == "manual" and nike.max_credit == 15
 
-    app.switch_page("pages/my_cards.py").run()
+    app.switch_page("views/my_cards.py").run()
     app.text_input[1].input("4321")  # BofA (second card)
     app.button[1].click().run()
     assert not app.exception, app.exception

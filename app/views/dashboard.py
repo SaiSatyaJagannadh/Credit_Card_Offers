@@ -44,7 +44,7 @@ with st.form("ask", clear_on_submit=True, border=False):
                      label_visibility="collapsed")
     if b.form_submit_button("Search", width="stretch") and q.strip():
         st.session_state["search_q"] = q.strip()
-        st.switch_page("pages/search.py")
+        st.switch_page("views/search.py")
 
 with db.session() as s:
     steps = setup_status.steps(s, bool(getattr(st.user, "is_logged_in", False)))
@@ -55,13 +55,13 @@ if left and not offers:
         st.write("No offers yet. Get started walks you through connecting your banks and "
                  "Gmail, and you can type in an offer any time.")
         a, b = st.columns(2)
-        a.page_link("pages/get_started.py", label="Open Get started")
-        b.page_link("pages/add.py", label="Add an offer")
+        a.page_link("views/get_started.py", label="Open Get started")
+        b.page_link("views/add.py", label="Add an offer")
 elif left:
     a, b = st.columns([4, 1], vertical_alignment="center")
     a.caption(c.md(f"Setup: {len(steps) - len(left)} of {len(steps)} done. "
                    f"Next: {left[0].title}."))
-    b.page_link("pages/get_started.py", label="Finish setup")
+    b.page_link("views/get_started.py", label="Finish setup")
 
 names = ", ".join(o.merchant_name for o in k.expiring_7[:3]) or "None"
 st.html('<div class="co-kpis">' + "".join([
@@ -84,7 +84,7 @@ with main:
             a.html(f'<div class="co-title">{escape(t.title)}</div>'
                    f'<div class="co-muted">{escape(t.detail)}</div>')
             if t.kind == "mfa":
-                b.page_link("pages/accounts.py", label="Enter code")
+                b.page_link("views/accounts.py", label="Enter code")
             elif link := c.link(t.action, LINK_LABEL.get(t.kind, "Open")):
                 b.html(link)
             cc.button("Done", key=f"done-{t.key}", on_click=mark_done, args=(t.key,),

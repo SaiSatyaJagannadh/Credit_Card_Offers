@@ -23,7 +23,7 @@ for src in refresh.BANKS:
     with st.container(border=True, key=f"card-bank-{src}"):
         a, b = st.columns([3, 2], vertical_alignment="center")
         a.markdown(f"**{refresh.SOURCES[src]}**")
-        b.html(c.status_pill(label, tone))
+        b.html(c.status_pill(label.split(": ", 1)[-1], tone))
         if run:
             st.caption(c.md(f"Last run {refresh.local_time(run.started_at)}"
                             + (f" · {run.message[:200]}" if run.message else "")))
@@ -37,7 +37,8 @@ for src in refresh.BANKS:
 
 st.subheader("Gmail")
 with st.container(border=True, key="card-gmail"):
-    st.html(c.status_pill(*statuses["gmail"]))
+    label, tone = statuses["gmail"]
+    st.html(c.status_pill(label.split(": ", 1)[-1], tone))
     run = runs["gmail"]
     if run:
         st.caption(c.md(f"Last run {refresh.local_time(run.started_at)}"
@@ -52,4 +53,4 @@ st.html(c.bullet_list([
     f"{card['name']} ({card['issuer']})"
     + (f" ••{card['last_digits']}" if card.get("last_digits") else " · last digits not set")
     for card in cards_config()]))
-st.page_link("pages/my_cards.py", label="Edit cards")
+st.page_link("views/my_cards.py", label="Edit cards")

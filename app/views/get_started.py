@@ -51,8 +51,8 @@ for i, x in enumerate(steps, 1):
                 st.code(x.command, language="bash")
             if x.page:
                 st.page_link(x.page, label="Open " + {
-                    "pages/my_cards.py": "My cards", "pages/accounts.py": "Accounts",
-                    "pages/add.py": "Add & edit"}[x.page])
+                    "views/my_cards.py": "My cards", "views/accounts.py": "Accounts",
+                    "views/add.py": "Add & edit"}[x.page])
 
 st.caption("Cloud keys (database, login, AI, Gmail, GitHub) are set once in Streamlit and "
            "GitHub secrets. Step-by-step instructions are in the README.")

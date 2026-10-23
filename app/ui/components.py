@@ -110,6 +110,22 @@ def option_card(opt: ranking.Option, card: dict, today: date, best: bool = False
             f"<div>{card_chip(card)}{status}{warns}</div></div>")
 
 
+def month_bars(by_month: dict[str, float], color: str, label: str) -> None:
+    """Monthly $ bars ("2026-09" keys), short month names, quiet axes."""
+    import altair as alt
+    import pandas as pd
+
+    keys = sorted(by_month)
+    df = pd.DataFrame({"Month": [date.fromisoformat(k + "-01").strftime("%b") for k in keys],
+                       label: [by_month[k] for k in keys]})
+    st.altair_chart(alt.Chart(df, height=220).mark_bar(
+        color=color, cornerRadiusEnd=4, size=36).encode(
+        x=alt.X("Month:N", title=None, sort=None, axis=alt.Axis(labelAngle=0)),
+        y=alt.Y(f"{label}:Q", title=None, axis=alt.Axis(format="$,.0f", tickCount=4)),
+        tooltip=["Month", alt.Tooltip(f"{label}:Q", format="$,.2f")],
+    ).configure_view(stroke=None), width="stretch")
+
+
 def bullet_list(items: list[str]) -> str:
     return '<ul class="co-list">' + "".join(f"<li>{escape(i)}</li>" for i in items) + "</ul>"
 

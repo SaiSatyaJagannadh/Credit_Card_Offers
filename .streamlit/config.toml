@@ -2,8 +2,12 @@
 base = "light"
 primaryColor = "#0B6E4F"
 backgroundColor = "#F7F8FA"
-secondaryBackgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F3F4F6"   # input fields: visible on white cards and the page
 textColor = "#111827"
+borderColor = "#D1D5DB"
+showWidgetBorder = true
+baseRadius = "10px"
+font = "Manrope, sans-serif"
 
 [client]
 toolbarMode = "minimal"
