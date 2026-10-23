@@ -226,14 +226,18 @@ def test_connected_banks_skips_banks_without_login(monkeypatch):
 
 
 def test_login_from_app_reaches_keychain_only(db, monkeypatch):
-    import keyring
+    import sys
+    from types import SimpleNamespace
 
     from app import sealed
     from app.db import Setting, get_setting, set_setting
 
     store = {}
-    monkeypatch.setattr(keyring, "get_password", lambda svc, k: store.get(k))
-    monkeypatch.setattr(keyring, "set_password", lambda svc, k, v: store.__setitem__(k, v))
+    monkeypatch.setitem(sys.modules, "keyring", SimpleNamespace(  # CI has no keyring
+        get_password=lambda svc, k: store.get(k),
+        set_password=lambda svc, k, v: store.__setitem__(k, v)))
+    monkeypatch.setattr(runner, "connected_banks", lambda: [b for b in runner.DEFAULT_BANKS
+                                                            if f"{b}:password" in store])
     priv = runner.link_app()
     assert runner.link_app() == priv  # key made once
     with session() as s:
