@@ -253,10 +253,17 @@ def alert_settings(s: Session) -> dict:
     return {**settings_config()["alert_defaults"], **get_setting(s, "alerts", {})}
 
 
+def load_card_overrides(s: Session) -> None:
+    from app.config import set_card_overrides
+
+    set_card_overrides(get_setting(s, "card_overrides", {}))
+
+
 def sync_cards(s: Session) -> None:
     """Upsert cards from cards.yaml."""
     from app.config import cards_config
 
+    load_card_overrides(s)
     for c in cards_config():
         s.merge(
             Card(

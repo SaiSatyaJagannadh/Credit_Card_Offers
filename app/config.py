@@ -30,8 +30,36 @@ def demo_mode() -> bool:
 
 
 @cache
-def cards_config() -> list[dict]:
+def _yaml_cards() -> list[dict]:
     return yaml.safe_load((CONFIG_DIR / "cards.yaml").read_text())["cards"]
+
+
+_overrides: dict[str, dict] = {}
+
+
+def set_card_overrides(overrides: dict[str, dict]) -> None:
+    """Edits from the My cards page (DB setting "card_overrides") layered over cards.yaml.
+    Callers load them once per run/rerun: app entry and workers."""
+    global _overrides
+    _overrides = overrides or {}
+    _merged.cache_clear()
+
+
+def _merge(card: dict, o: dict) -> dict:
+    out = {**card, **{k: v for k, v in o.items() if k not in ("categories", "rotating")}}
+    out["categories"] = {**card.get("categories", {}), **o.get("categories", {})}
+    if card.get("rotating") is not None or "rotating" in o:
+        out["rotating"] = {**(card.get("rotating") or {}), **o.get("rotating", {})}
+    return out
+
+
+@cache
+def _merged() -> tuple[dict, ...]:
+    return tuple(_merge(c, _overrides.get(c["id"], {})) for c in _yaml_cards())
+
+
+def cards_config() -> list[dict]:
+    return list(_merged())
 
 
 @cache

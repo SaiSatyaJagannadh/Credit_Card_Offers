@@ -45,8 +45,9 @@ def _alias(s: Session, alias: str, m: Merchant) -> Merchant:
     return m
 
 
-def merchant_for(s: Session, raw: str) -> Merchant:
-    """Alias table -> exact/fuzzy canonical name -> LLM fallback. Learned aliases persist."""
+def merchant_for(s: Session, raw: str, category: str | None = None) -> Merchant:
+    """Alias table -> exact/fuzzy canonical name -> LLM fallback. Learned aliases persist.
+    `category` given (manual entry): skip the LLM and create the merchant with it."""
     n = norm(raw)
     if a := s.scalar(select(MerchantAlias).where(MerchantAlias.alias == n)):
         return s.get(Merchant, a.merchant_id)
@@ -56,8 +57,8 @@ def merchant_for(s: Session, raw: str) -> Merchant:
                               score_cutoff=settings_config()["fuzzy_threshold"])
     if best:
         return _alias(s, n, next(m for m in merchants if m.id == best[2]))
-    pick = MerchantPick(name=raw.strip())
-    if merchants:
+    pick = MerchantPick(name=raw.strip(), category=category or "other")
+    if merchants and category is None:
         try:
             pick = llm.complete_json(MERCHANT_SYSTEM, f"EXISTING: {sorted(names.values())}\n"
                                                       f"RAW: {raw}", MerchantPick)
