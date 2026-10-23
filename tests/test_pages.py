@@ -91,3 +91,22 @@ def test_first_run_starts_on_get_started(tmp_path, monkeypatch):
     at.run()
     assert not at.exception, at.exception
     assert at.title[0].value == "Get started"
+
+
+def test_accounts_connect_seals_login(app):
+    from app import sealed
+
+    _, pub = sealed.new_keypair()
+    with db.session() as s:
+        db.set_setting(s, sealed.PUBLIC_KEY, pub)
+        db.set_setting(s, sealed.SEEN, {"at": db.utcnow().isoformat(), "banks": []})
+    app.switch_page("views/accounts.py").run()
+    assert not app.exception
+    form = [t for t in app.text_input if t.label == "BofA username"][0]
+    form.input("me")
+    [t for t in app.text_input if t.label == "BofA password"][0].input("s3cret!")
+    [b for b in app.button if b.label == "Connect"][1].click().run()
+    assert not app.exception
+    with db.session() as s:
+        blob = db.get_setting(s, sealed.pending_key("bofa"))
+    assert blob and "s3cret" not in blob

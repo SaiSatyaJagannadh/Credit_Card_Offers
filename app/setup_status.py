@@ -65,9 +65,8 @@ def steps(s: Session, logged_in: bool) -> list[Step]:
             "Not connected yet" if run is None else
             {"ok": f"Synced: {run.message}", "needs_code": "Waiting for a security code",
              "running": "Syncing now"}.get(run.status, f"Last try failed: {run.message[:120]}"),
-            f"On your Mac, double-click Card Offers Helper in the project folder. Save your "
-            f"{name} login there (it stays in your Mac's Keychain), press Sync now, then "
-            "turn on automatic sync.",
+            f"Open Accounts and connect {name} with your username and password. If the "
+            "bank sends a security code, type it there too.",
             page="views/accounts.py"))
     out.append(Step("offers", "First offers in", offers > 0,
                     f"{offers} offers saved" if offers else "No offers yet",

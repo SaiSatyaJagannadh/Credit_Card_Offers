@@ -57,7 +57,7 @@ st.subheader("How it works")
 FLOW = [
     ("Bank robot", "On your Mac, every day at 7 AM",
      "Signs in to Amex, Bank of America and Wells Fargo as you and reads the offers on your "
-     "accounts. Set it up once with the Card Offers Helper on your Mac."),
+     "accounts. You connect each bank on Accounts."),
     ("Gmail reader", "In the cloud, every hour",
      "Reads only bank emails: new offers, purchases and credits posted."),
     ("You", "Any time, on Add & edit",
