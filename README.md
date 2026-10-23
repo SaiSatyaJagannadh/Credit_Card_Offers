@@ -29,6 +29,11 @@ categories) and `config/settings.yaml` for grades, quiet hours, timezone and ale
 
 ## Deploy, step by step
 
+Shortcut: after creating the Supabase project and Google OAuth clients, run
+`.venv/bin/python scripts/golive.py`. It asks for each value once, writes
+`.streamlit/secrets.toml`, creates the tables, gets the Gmail token from `credentials.json`,
+and sets the GitHub Actions secrets (after `gh auth login`).
+
 ### 1. Supabase (database)
 1. Create a free project at supabase.com. **Project Settings → Database → Connection string →
    Session pooler** (port 5432, IPv4-friendly). That's `DATABASE_URL`. SSL is forced
