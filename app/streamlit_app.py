@@ -39,9 +39,13 @@ elif not auth_configured():
     st.stop()
 else:
     if not st.user.is_logged_in:
-        st.title("Card Offers")
-        st.write("Sign in to see your offers.")
-        st.button("Log in with Google", on_click=st.login, type="primary")
+        _, mid, _ = st.columns([1, 2, 1])
+        with mid, st.container(border=True):
+            st.title("Card Offers")
+            st.write("Every offer on your cards, which card to use, and a heads-up "
+                     "before offers expire.")
+            st.button("Log in with Google", on_click=st.login, type="primary",
+                      width="stretch")
         st.stop()
     allowed = (secret("ALLOWED_EMAIL") or "").strip().lower()
     if not allowed or str(st.user.email or "").lower() != allowed:
@@ -52,13 +56,23 @@ else:
 
 if demo_mode():
     seed_demo()
+with db.session() as s:
+    db.load_card_overrides(s)  # My cards edits, fresh on every rerun
 
-st.navigation([
-    st.Page("pages/dashboard.py", title="Dashboard", default=True),
-    st.Page("pages/search.py", title="Search"),
-    st.Page("pages/cards_credits.py", title="Cards & credits"),
-    st.Page("pages/insights.py", title="Insights"),
-    st.Page("pages/watchlist.py", title="Watchlist"),
-    st.Page("pages/alerts.py", title="Alerts"),
-    st.Page("pages/accounts.py", title="Accounts"),
-]).run()
+st.navigation({
+    "Offers": [
+        st.Page("pages/dashboard.py", title="Dashboard", default=True),
+        st.Page("pages/search.py", title="Best card / Ask"),
+        st.Page("pages/insights.py", title="Insights"),
+        st.Page("pages/cards_credits.py", title="Cards & credits"),
+    ],
+    "Enter details": [
+        st.Page("pages/add.py", title="Add & edit"),
+        st.Page("pages/my_cards.py", title="My cards"),
+        st.Page("pages/watchlist.py", title="Watchlist"),
+    ],
+    "Settings": [
+        st.Page("pages/accounts.py", title="Accounts"),
+        st.Page("pages/alerts.py", title="Alerts"),
+    ],
+}).run()

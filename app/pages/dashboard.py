@@ -31,6 +31,18 @@ def mark_done(key: str) -> None:
 st.title("Card Offers")
 st.caption(f"Last synced {refresh.local_time(last)}" if last else "Not synced yet")
 
+if not offers:
+    with st.container(border=True):
+        st.subheader("Welcome — let's load your offers")
+        st.write("No offers yet. Three ways to fill this page:")
+        a, b, cc = st.columns(3)
+        a.markdown("**1. Set up your cards**  \nLast digits, BofA 3% choice, Discover 5%.")
+        a.page_link("pages/my_cards.py", label="Open My cards")
+        b.markdown("**2. Add an offer you see**  \nIn your bank app? Enter it in a minute.")
+        b.page_link("pages/add.py", label="Open Add & edit")
+        cc.markdown("**3. Connect your banks**  \nThe robot on your Mac reads every offer.")
+        cc.page_link("pages/accounts.py", label="Open Accounts")
+
 top = st.columns([4, 1], vertical_alignment="bottom")
 with top[0].form("ask", clear_on_submit=True, border=False):
     q = st.text_input("Search or ask", placeholder="Search or ask: best card for $40 at Uber?",

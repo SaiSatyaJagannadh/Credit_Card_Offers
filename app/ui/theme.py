@@ -15,6 +15,11 @@ html, body, .stApp, .stApp p, .stApp label, .stApp input, .stApp textarea, .stAp
 .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp li, .stApp td, .stApp th {
   font-family: 'Manrope', system-ui, sans-serif;
 }
+.block-container { padding-top: 2.5rem; max-width: 1180px; }
+.stApp h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+.stApp h2, .stApp h3 { font-size: 1.2rem; font-weight: 700; margin-top: 0.6rem; }
+[data-testid="stSidebarNavSeparator"] { display: none; }
+[data-testid="stNavSectionHeader"] { color: var(--co-muted); font-weight: 700; }
 [data-testid="stSidebar"] { background: var(--co-card); border-right: 1px solid var(--co-border); }
 .mono, .co-value, [data-testid="stMetricValue"] { font-family: 'JetBrains Mono', monospace; }
 .co-muted, [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] * {
