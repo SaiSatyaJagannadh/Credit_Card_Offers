@@ -53,7 +53,7 @@ def card_info(card_id: str) -> dict:
 
 
 def card_chip(card: dict) -> str:
-    digits = f" ••{card['last_digits']}" if card.get("last_digits") else ""
+    digits = f" ending {card['last_digits']}" if card.get("last_digits") else ""
     return pill(f"{card['name']}{digits}", "gray")
 
 
@@ -84,8 +84,8 @@ def offer_row(offer: Any, card: dict, today: date, new: bool = False,
         f"{escape(offer.merchant_name)}</span>{badges}</div>"
         f'<div class="co-muted">{escape(offer.offer_text)}</div>'
         f"<div>{card_chip(card)}{expiry_chip(offer.expires_on, today)}</div></div>"
-        f'<div class="co-offer-side"><div class="co-value">up to {escape(money(max_v, False))}'
-        f"</div><div>{action}</div></div></div>"
+        f'<div class="co-offer-side"><div class="co-upto">up to <span class="co-value">'
+        f'{escape(money(max_v, False))}</span></div><div>{action}</div></div></div>'
     )
 
 
@@ -100,7 +100,8 @@ def option_card(opt: ranking.Option, card: dict, today: date, best: bool = False
     head = pill("Best card", "green") if best else ""
     status = ""
     if opt.offer is not None:
-        status = (pill("Offer added", "green") if opt.offer.enrolled
+        status = pill(f"{opt.offer.merchant_name} offer", "blue")
+        status += (pill("Offer added", "green") if opt.offer.enrolled
                   else pill("Offer not added", "amber"))
         status += expiry_chip(opt.offer.expires_on, today)
     warns = "".join(pill(w, "amber") for w in opt.warnings if w != "Offer not added to card yet")

@@ -23,8 +23,10 @@ html, body, .stApp, .stApp p, .stApp label, .stApp input, .stApp textarea, .stAp
 [data-testid="stSidebar"] { background: var(--co-card); border-right: 1px solid var(--co-border); }
 .mono, .co-value, [data-testid="stMetricValue"] { font-family: 'JetBrains Mono', monospace; }
 .co-muted, [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] * {
-  color: var(--co-muted) !important;
+  color: var(--co-muted) !important; opacity: 1 !important;  /* 4.5:1 contrast */
 }
+.co-upto { color: var(--co-muted); font-size: 0.85rem; }
+.co-upto .co-value { color: var(--co-text); font-size: 1rem; font-weight: 700; }
 
 a:focus-visible, button:focus-visible { outline: 2px solid var(--co-accent); outline-offset: 2px; }
 /* touch targets */
@@ -69,7 +71,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--co-accent); out
   flex: 0 0 40px; height: 40px; border-radius: 10px; background: #E7F5EE; color: #0B5E43;
   display: flex; align-items: center; justify-content: center; font-weight: 800;
 }
-.co-offer-main { flex: 1 1 auto; min-width: 0; }
+.co-offer-main { flex: 1 1 0; min-width: 0; }
 .co-merchant { font-weight: 700; margin-right: 6px; }
 .co-offer-side { flex: 0 0 auto; text-align: right; }
 .co-offer-side .co-value { font-weight: 700; }

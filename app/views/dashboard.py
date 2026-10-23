@@ -38,6 +38,12 @@ if act.button("Refresh now", type="primary", width="stretch",
 for m in st.session_state.get("refresh_msgs", []):
     st.info(c.md(m))
 
+for src, (label, _) in statuses.items():
+    if label.endswith("needs security code"):
+        a, b = st.columns([4, 1], vertical_alignment="center")
+        a.warning(f"{refresh.SOURCES[src]} is waiting for a security code from your bank.")
+        b.page_link("views/accounts.py", label="Enter code")
+
 with st.form("ask", clear_on_submit=True, border=False):
     a, b = st.columns([5, 1], vertical_alignment="bottom")
     q = a.text_input("Search or ask", placeholder="Search or ask: best card for $40 at Uber?",

@@ -57,6 +57,12 @@ def ask_llm(question: str) -> None:
                  "amount": t.amount, "date": t.date.isoformat()}
                 for t in s.scalars(select(Transaction).where(Transaction.date >= since))]
     context = {"offers": offers, "cards": cards_config(), "transactions": txns}
+    from app.config import secret
+
+    if not (secret("OPENAI_API_KEY") or secret("NVIDIA_API_KEY")):
+        st.info("Questions need the AI assistant, which isn't set up yet. You can still "
+                "ask about a purchase, like \"$40 at Uber\".")
+        return
     try:
         from app.llm import answer_question
 
@@ -74,7 +80,7 @@ def ask_llm(question: str) -> None:
     st.markdown(c.md(answer))  # markdown escapes HTML; md() keeps "$" literal
 
 
-st.title("Search")
+st.title("Best card / Ask")
 q = st.text_input("Search or ask", key="search_q",  # Dashboard pre-fills this key
                   placeholder="Search or ask: best card for $40 at Uber?")
 if q.strip():

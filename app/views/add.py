@@ -20,7 +20,7 @@ today = insights.today()
 
 def card_label(cid: str) -> str:
     c = cards[cid]
-    return c["name"] + (f" ••{c['last_digits']}" if c.get("last_digits") else "")
+    return c["name"] + (f" (ending {c['last_digits']})" if c.get("last_digits") else "")
 
 
 def done(msg: str) -> None:
@@ -124,9 +124,9 @@ with t_manage:
         st.caption("Tick Added once you've added an offer on the bank's site. Tick Delete to "
                    "remove an offer you entered by mistake.")
         df = pd.DataFrame([{
-            "id": o.id, "Merchant": o.merchant_name, "Card": card_label(o.card_id),
-            "Offer": o.offer_text, "Up to $": ranking.offer_max_value(o),
-            "Expires": o.expires_on, "Source": o.source, "Added": o.enrolled, "Delete": False,
+            "id": o.id, "Added": o.enrolled, "Delete": False, "Merchant": o.merchant_name,
+            "Up to $": ranking.offer_max_value(o), "Expires": o.expires_on,
+            "Card": cards[o.card_id]["name"], "Offer": o.offer_text,
         } for o in sorted(offers, key=lambda o: (o.expires_on is None, o.expires_on))])
         edited = st.data_editor(
             df, hide_index=True, width="stretch", key="manage",
@@ -155,8 +155,8 @@ with t_manage:
         st.subheader("Purchases you entered")
         for t in recent:
             a, b = st.columns([5, 1], vertical_alignment="center")
-            a.write(f"{t.date:%b %d} · {t.merchant_raw} · \\${t.amount:,.2f} · "
-                    f"{card_label(t.card_id)}")
+            a.text(f"{t.date:%b %d}  {t.merchant_raw}  ${t.amount:,.2f}  "
+                   f"{card_label(t.card_id)}")
             if b.button("Delete", key=f"del-t-{t.id}"):
                 with db.session() as s:
                     s.execute(delete(ExpectedCredit).where(ExpectedCredit.transaction_id == t.id))

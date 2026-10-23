@@ -16,7 +16,7 @@ def test_offer_row_escapes_merchant():
     html = offer_row(o, card, utcnow().date(), new=True, shop_here=True)
     assert "<script>" not in html and "<b>" not in html
     assert "&lt;script&gt;" in html
-    assert "up to $60" in html and "New" in html and "You shop here" in html
+    assert ">$60</span>" in html and "up to" in html and "New" in html and "You shop here" in html
     assert 'href="https://example.com/offers?a=1&amp;b=2"' in html
 
 

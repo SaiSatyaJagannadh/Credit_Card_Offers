@@ -13,6 +13,7 @@ from workers.match import CATEGORIES
 
 CHOICES = ["gas", "online", "dining", "travel", "drugstores", "home_improvement"]
 LABEL = {c: c.replace("_", " ").title() for c in CATEGORIES}
+KEY = {v: k for k, v in LABEL.items()}
 q = ranking.quarter_key(today())
 yaml_by_id = {c["id"]: c for c in _yaml_cards()}
 
@@ -44,7 +45,7 @@ for card in cards_config():
                     if cur in CHOICES else 1, format_func=LABEL.get)
             if base.get("rotating") is not None:
                 rot = card.get("rotating", {}).get(q, {"categories": [], "activated": False})
-                cats = st.multiselect(f"5% categories for {q}", CATEGORIES,
+                cats = st.multiselect(f"5% categories for {ranking.quarter_label(q)}", CATEGORIES,
                                       default=[c for c in rot["categories"] if c in CATEGORIES],
                                       format_func=LABEL.get)
                 act = st.checkbox("I activated this quarter's 5%", value=rot.get("activated"))
@@ -53,26 +54,29 @@ for card in cards_config():
                 st.caption(f"Everything else earns {card['base_rate'] * 100:g}%. "
                            "Add bonus categories if this card has any.")
                 rows = pd.DataFrame(
-                    [{"Category": k, "Rate %": v["rate"] * 100}
+                    [{"Category": LABEL.get(k, k), "Rate %": v["rate"] * 100}
                      for k, v in card.get("categories", {}).items()],
                     columns=["Category", "Rate %"])
                 edited = st.data_editor(
                     rows, num_rows="dynamic", hide_index=True, width="stretch",
                     key=f"bonus-{card['id']}", column_config={
-                        "Category": st.column_config.SelectboxColumn(options=CATEGORIES,
-                                                                     required=True),
+                        "Category": st.column_config.SelectboxColumn(
+                            options=list(LABEL.values()), required=True),
                         "Rate %": st.column_config.NumberColumn(min_value=0.0, max_value=10.0,
                                                                 step=0.5, required=True)})
             if st.form_submit_button("Save", type="primary"):
                 digits = digits.strip()
+                bonus = edited.to_dict("records") if not base.get("categories") else []
                 if digits and not re.fullmatch(r"\d{4,5}", digits):
                     st.error("Last digits must be 4 or 5 numbers.")
-                    st.stop()
-                patch["last_digits"] = digits
-                if not base.get("categories"):
-                    patch["categories"] = {
-                        r["Category"]: {"rate": float(r["Rate %"]) / 100}
-                        for r in edited.dropna().to_dict("records")}
-                save(card["id"], patch)
-                st.success("Saved.")
-                st.rerun()
+                elif any(r["Category"] and pd.isna(r["Rate %"]) for r in bonus):
+                    st.error("Give every bonus category a rate, or remove the row.")
+                else:
+                    patch["last_digits"] = digits
+                    if not base.get("categories"):
+                        patch["categories"] = {
+                            KEY[r["Category"]]: {"rate": float(r["Rate %"]) / 100}
+                            for r in bonus if r["Category"] and not pd.isna(r["Rate %"])}
+                    save(card["id"], patch)
+                    st.toast(f"Saved {card['name']}.")
+                    st.rerun()

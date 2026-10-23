@@ -33,6 +33,7 @@ with st.form("add-watch", clear_on_submit=True):
                     st.info(f"{name} is already on your watchlist.")
                 else:
                     s.add(Watchlist(merchant_name=name))
+                    st.toast(f"Watching {name}.")
 
 today = insights.today()
 with db.session() as s:
