@@ -30,7 +30,55 @@ def connected_banks() -> list[str]:
     from robot.base import has_credentials
 
     return [b for b in DEFAULT_BANKS if has_credentials(b)]
-POLL_SECONDS = 120
+
+
+POLL_SECONDS = 60
+
+
+def link_app() -> str:
+    """Publish this Mac's public key so the app can send it sealed logins (once)."""
+    import keyring
+
+    from app import sealed
+    from app.db import get_setting, set_setting
+    from robot.base import KEYRING_SERVICE
+
+    priv = keyring.get_password(KEYRING_SERVICE, "app-link:private-key")
+    with session() as s:
+        if not priv or not get_setting(s, sealed.PUBLIC_KEY):
+            priv, pub = sealed.new_keypair()
+            keyring.set_password(KEYRING_SERVICE, "app-link:private-key", priv)
+            set_setting(s, sealed.PUBLIC_KEY, pub)
+    return priv
+
+
+def apply_pending_logins(priv: str) -> list[str]:
+    """Logins typed in the app -> Keychain; the sealed rows are deleted. Returns banks to
+    sync. Also reports which banks have a login, so the app can show it."""
+    import keyring
+
+    from app import sealed
+    from app.db import Setting, get_setting, set_setting
+    from robot.base import KEYRING_SERVICE
+
+    new = []
+    with session() as s:
+        for bank in BANKS:
+            blob = get_setting(s, sealed.pending_key(bank))
+            if blob is None:
+                continue
+            s.delete(s.get(Setting, sealed.pending_key(bank)))
+            try:
+                user, pw = sealed.unseal(priv, blob)
+            except Exception:  # sealed for an older key: ask again in the app
+                log.error("%s: could not open the login sent from the app", bank)
+                continue
+            keyring.set_password(KEYRING_SERVICE, f"{bank}:username", user)
+            keyring.set_password(KEYRING_SERVICE, f"{bank}:password", pw)
+            log.info("%s: login saved from the app", bank)
+            new.append(bank)
+        set_setting(s, sealed.SEEN, {"at": utcnow().isoformat(), "banks": connected_banks()})
+    return new
 
 
 def save_offers(robot: BaseBankRobot, offers: list[RobotOffer]) -> int:
@@ -82,8 +130,10 @@ def run_banks(banks: list[str], headless: bool = True) -> None:
         run_bank(b, headless)
 
 
-def poll_once(run: Callable[[list[str]], None] = run_banks) -> list[str]:
-    """Pick up pending refresh requests, run each requested bank once, mark them done."""
+def poll_once(run: Callable[[list[str]], None] = run_banks,
+              new_logins: list[str] | None = None) -> list[str]:
+    """Pick up pending refresh requests, run each requested bank once, mark them done.
+    Banks whose login just arrived from the app sync right away."""
     with session() as s:
         reqs = s.scalars(select(RefreshRequest).where(
             RefreshRequest.picked_up_at.is_(None),
@@ -91,12 +141,12 @@ def poll_once(run: Callable[[list[str]], None] = run_banks) -> list[str]:
         for r in reqs:
             r.picked_up_at = utcnow()
         ids = [r.id for r in reqs]
-        banks: list[str] = []
+        banks: list[str] = list(new_logins or [])
         for r in reqs:
             for b in connected_banks() if r.source == "all" else [r.source]:
                 if b not in banks:
                     banks.append(b)
-    if not ids:
+    if not ids and not banks:
         return []
     try:
         run(banks)
@@ -122,9 +172,11 @@ def main(argv: list[str] | None = None) -> None:
     if not args.poll:
         run_banks(args.bank or connected_banks(), headless)
         return
+    priv = None
     while True:
         try:
-            poll_once(lambda banks: run_banks(banks, headless))
+            priv = priv or link_app()
+            poll_once(lambda banks: run_banks(banks, headless), apply_pending_logins(priv))
         except Exception as e:  # DB blip: keep polling
             log.error("poll failed: %s", type(e).__name__)
         time.sleep(POLL_SECONDS)

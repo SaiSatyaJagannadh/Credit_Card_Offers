@@ -212,7 +212,14 @@ class BaseBankRobot(ABC):
         self.page.on("response", self._on_response)
         return self
 
-    def __exit__(self, *exc) -> None:
+    def __exit__(self, exc_type, *exc) -> None:
+        if exc_type and self.page:  # local-only clue for tuning: where it stopped + a screenshot
+            try:
+                log.info("%s: stopped at %s", self.bank, self.page.url.split("?")[0])
+                self.page.screenshot(path=str(PROFILES_DIR.parent / f"last-{self.bank}.png"),
+                                     full_page=True)
+            except Exception:
+                pass
         try:
             self.ctx.close()
         finally:
@@ -296,9 +303,15 @@ class SelectorRobot(BaseBankRobot):
         pause()
         self.type_slowly(self.pass_sel, pw)
         pause()
-        p.locator(self.submit_sel).first.click()
+        # Enter, not a click: "a, b".first is first in page order, and on Amex that was a
+        # header button, not Log In
+        p.locator(self.pass_sel).first.press("Enter")
         self.settle(20_000)
         pause()
+        if self.visible(self.pass_sel, 3_000) and not self.visible(self.mfa_code_sel, 1_000):
+            raise RuntimeError("the bank didn't let the robot sign in (still on the sign-in "
+                               "page). Either the password is wrong, or the bank blocks "
+                               "automated sign-ins (Amex does)")
 
     def needs_mfa(self) -> bool:
         p = self.page

@@ -27,8 +27,7 @@ def request_refresh() -> list[str]:
     try:
         with session() as s:
             s.add(RefreshRequest(source="all"))
-        msgs.append("Banks: sync requested. Your Mac picks it up within 2 minutes if it's "
-                    "on and automatic sync is turned on in the Card Offers Helper.")
+        msgs.append("Banks: sync requested. Your Mac picks it up within a minute if it's on.")
     except Exception as e:
         msgs.append(f"Banks: could not save the refresh request ({type(e).__name__}).")
     token, repo = secret("GITHUB_TOKEN"), secret("GITHUB_REPO")

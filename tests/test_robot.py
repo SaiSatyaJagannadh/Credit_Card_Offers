@@ -223,3 +223,28 @@ def test_connected_banks_skips_banks_without_login(monkeypatch):
 
     monkeypatch.setattr(robot.base, "has_credentials", lambda b: b == "amex")
     assert runner.connected_banks() == ["amex"]
+
+
+def test_login_from_app_reaches_keychain_only(db, monkeypatch):
+    import keyring
+
+    from app import sealed
+    from app.db import Setting, get_setting, set_setting
+
+    store = {}
+    monkeypatch.setattr(keyring, "get_password", lambda svc, k: store.get(k))
+    monkeypatch.setattr(keyring, "set_password", lambda svc, k, v: store.__setitem__(k, v))
+    priv = runner.link_app()
+    assert runner.link_app() == priv  # key made once
+    with session() as s:
+        set_setting(s, sealed.pending_key("amex"),
+                    sealed.seal(get_setting(s, sealed.PUBLIC_KEY), "me", "s3cret!"))
+    with session() as s:  # the DB holds ciphertext only
+        assert "s3cret" not in " ".join(r.value for r in s.query(Setting))
+    assert runner.apply_pending_logins(priv) == ["amex"]
+    assert store["amex:username"] == "me" and store["amex:password"] == "s3cret!"
+    with session() as s:
+        assert get_setting(s, sealed.pending_key("amex")) is None
+        assert get_setting(s, sealed.SEEN)["banks"] == ["amex"]
+    calls = []
+    assert runner.poll_once(calls.append, ["amex"]) == ["amex"]  # syncs right away

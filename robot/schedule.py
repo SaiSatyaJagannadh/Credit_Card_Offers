@@ -8,9 +8,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 AGENTS = Path.home() / "Library" / "LaunchAgents"
 JOBS = {
-    "com.cardoffers.robot": {"args": ["--once"],
+    "com.cardoffers.robot": {"args": ["--once", "--headed"],
                              "StartCalendarInterval": {"Hour": 7, "Minute": 0}},
-    "com.cardoffers.robot-poll": {"args": ["--poll"], "KeepAlive": True, "RunAtLoad": True},
+    "com.cardoffers.robot-poll": {"args": ["--poll", "--headed"], "KeepAlive": True,
+                                  "RunAtLoad": True},
 }
 
 
