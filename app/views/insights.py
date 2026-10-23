@@ -2,7 +2,6 @@
 
 from datetime import date
 
-import altair as alt
 import pandas as pd
 import streamlit as st
 from sqlalchemy import select
@@ -35,10 +34,7 @@ st.subheader(f"Missed savings in {today.year}")
 by_month = insights.missed_by_month(misses)
 if misses:
     st.metric("Total missed", c.money(sum(by_month.values())))
-    df = pd.DataFrame({"Month": list(by_month), "Missed": list(by_month.values())})
-    st.altair_chart(alt.Chart(df).mark_bar(color="#8A4B00", cornerRadiusEnd=4).encode(
-        x=alt.X("Month:N", title=None, sort=None), y=alt.Y("Missed:Q", title="Missed ($)"),
-        tooltip=["Month", alt.Tooltip("Missed:Q", format="$,.2f")]), width="stretch")
+    c.month_bars(by_month, "#8A4B00", "Missed")
     top5 = sorted(misses, key=lambda m: -m.missed)[:5]
     st.markdown("**Top misses**")
     st.html(c.bullet_list([

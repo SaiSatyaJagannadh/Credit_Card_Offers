@@ -20,7 +20,7 @@ st.subheader("Banks")
 for src in refresh.BANKS:
     label, tone = statuses[src]
     run = runs[src]
-    with st.container(border=True):
+    with st.container(border=True, key=f"card-bank-{src}"):
         a, b = st.columns([3, 2], vertical_alignment="center")
         a.markdown(f"**{refresh.SOURCES[src]}**")
         b.html(c.status_pill(label, tone))
@@ -36,7 +36,7 @@ for src in refresh.BANKS:
                     language="bash")
 
 st.subheader("Gmail")
-with st.container(border=True):
+with st.container(border=True, key="card-gmail"):
     st.html(c.status_pill(*statuses["gmail"]))
     run = runs["gmail"]
     if run:

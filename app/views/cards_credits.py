@@ -1,6 +1,5 @@
 """Cards & credits: best card per category, cap trackers, saved-from-offers chart, cards."""
 
-import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -55,12 +54,7 @@ if not any_cap:
 
 st.subheader("Saved from offers")
 if saved:
-    df = pd.DataFrame({"Month": list(saved), "Saved": list(saved.values())})
-    st.altair_chart(alt.Chart(df).mark_bar(color="#0B6E4F", cornerRadiusEnd=4).encode(
-        x=alt.X("Month:N", title=None, sort=None),
-        y=alt.Y("Saved:Q", title="Saved ($)"),
-        tooltip=["Month", alt.Tooltip("Saved:Q", format="$,.2f")],
-    ), width="stretch")
+    c.month_bars(saved, "#0B6E4F", "Saved")
 else:
     st.caption(f"No credits posted in {today.year} yet.")
 

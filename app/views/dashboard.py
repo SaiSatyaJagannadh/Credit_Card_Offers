@@ -1,11 +1,12 @@
 """Dashboard: KPIs, to-dos, top offers, expiring soon, accounts, credits, Gmail status."""
 
 from datetime import date, datetime
+from html import escape
 
 import streamlit as st
 from sqlalchemy import func, select
 
-from app import db, insights, ranking, refresh
+from app import db, insights, ranking, refresh, setup_status
 from app.db import Credit, SyncRun, TodoDone, Watchlist
 from app.ui import components as c
 
@@ -28,42 +29,47 @@ def mark_done(key: str) -> None:
         s.merge(TodoDone(key=key))
 
 
-st.title("Card Offers")
-st.caption(f"Last synced {refresh.local_time(last)}" if last else "Not synced yet")
-
-if not offers:
-    with st.container(border=True):
-        st.subheader("Welcome — let's load your offers")
-        st.write("No offers yet. Three ways to fill this page:")
-        a, b, cc = st.columns(3)
-        a.markdown("**1. Set up your cards**  \nLast digits, BofA 3% choice, Discover 5%.")
-        a.page_link("pages/my_cards.py", label="Open My cards")
-        b.markdown("**2. Add an offer you see**  \nIn your bank app? Enter it in a minute.")
-        b.page_link("pages/add.py", label="Open Add & edit")
-        cc.markdown("**3. Connect your banks**  \nThe robot on your Mac reads every offer.")
-        cc.page_link("pages/accounts.py", label="Open Accounts")
-
-top = st.columns([4, 1], vertical_alignment="bottom")
-with top[0].form("ask", clear_on_submit=True, border=False):
-    q = st.text_input("Search or ask", placeholder="Search or ask: best card for $40 at Uber?",
-                      label_visibility="collapsed")
-    if st.form_submit_button("Search") and q.strip():
-        st.session_state["search_q"] = q.strip()
-        st.switch_page("pages/search.py")
-if top[1].button("Refresh now", type="primary", width="stretch"):
+head, act = st.columns([3, 1], vertical_alignment="bottom")
+head.title("Card Offers")
+head.caption(f"Last synced {refresh.local_time(last)}" if last else "Not synced yet")
+if act.button("Refresh now", type="primary", width="stretch",
+              help="Checks Gmail now and asks the bank robot on your Mac to sync."):
     st.session_state["refresh_msgs"] = refresh.request_refresh()
 for m in st.session_state.get("refresh_msgs", []):
     st.info(c.md(m))
 
-tiles = st.columns(4)
+with st.form("ask", clear_on_submit=True, border=False):
+    a, b = st.columns([5, 1], vertical_alignment="bottom")
+    q = a.text_input("Search or ask", placeholder="Search or ask: best card for $40 at Uber?",
+                     label_visibility="collapsed")
+    if b.form_submit_button("Search", width="stretch") and q.strip():
+        st.session_state["search_q"] = q.strip()
+        st.switch_page("pages/search.py")
+
+with db.session() as s:
+    steps = setup_status.steps(s, bool(getattr(st.user, "is_logged_in", False)))
+left = [x for x in steps if not x.done]
+if left and not offers:
+    with st.container(border=True, key="card-welcome"):
+        st.subheader("Welcome. Let's load your offers")
+        st.write("No offers yet. Get started walks you through connecting your banks and "
+                 "Gmail, and you can type in an offer any time.")
+        a, b = st.columns(2)
+        a.page_link("pages/get_started.py", label="Open Get started")
+        b.page_link("pages/add.py", label="Add an offer")
+elif left:
+    a, b = st.columns([4, 1], vertical_alignment="center")
+    a.caption(c.md(f"Setup: {len(steps) - len(left)} of {len(steps)} done. "
+                   f"Next: {left[0].title}."))
+    b.page_link("pages/get_started.py", label="Finish setup")
+
 names = ", ".join(o.merchant_name for o in k.expiring_7[:3]) or "None"
-for col, html in zip(tiles, [
+st.html('<div class="co-kpis">' + "".join([
     c.kpi_tile("Value on your cards", c.money(k.value_total, False), f"{len(offers)} offers"),
     c.kpi_tile("Not added yet", c.money(k.not_added_value, False), f"{k.not_added_count} offers"),
     c.kpi_tile("Expiring in 7 days", str(len(k.expiring_7)), names),
     c.kpi_tile("Saved this year", c.money(k.saved_this_year), "Credits posted"),
-], strict=True):
-    col.html(html)
+]) + "</div>")
 
 main, side = st.columns([2, 1], gap="large")
 
@@ -73,12 +79,16 @@ with main:
         st.caption("Nothing to do right now.")
     LINK_LABEL = {"add_offer": "Add to card", "activate": "Activate", "review": "Review"}
     for t in todos:
-        a, b = st.columns([5, 1], vertical_alignment="center")
-        a.html(c.todo_card(t.title, t.detail, t.action, LINK_LABEL.get(t.kind, "Open")))
-        if t.kind == "mfa":
-            a.page_link("pages/accounts.py", label="Enter code on Accounts")
-        b.button("Done", key=f"done-{t.key}", on_click=mark_done, args=(t.key,),
-                 width="stretch")
+        with st.container(border=True, key=f"card-todo-{t.key}"):
+            a, b, cc = st.columns([4, 2, 1], vertical_alignment="center")
+            a.html(f'<div class="co-title">{escape(t.title)}</div>'
+                   f'<div class="co-muted">{escape(t.detail)}</div>')
+            if t.kind == "mfa":
+                b.page_link("pages/accounts.py", label="Enter code")
+            elif link := c.link(t.action, LINK_LABEL.get(t.kind, "Open")):
+                b.html(link)
+            cc.button("Done", key=f"done-{t.key}", on_click=mark_done, args=(t.key,),
+                      width="stretch", help="Hide this to-do")
 
     st.subheader("Top offers")
     f1, f2 = st.columns(2)
@@ -112,8 +122,11 @@ with main:
 
 with side:
     st.subheader("Connected accounts")
-    for src, (label, tone) in statuses.items():
-        st.html(c.status_pill(label, tone))
+    st.html('<div class="co-card">' + "".join(
+        f'<div class="co-acct"><span>{escape(refresh.SOURCES[src])}</span>'
+        f'{c.status_pill(label.split(": ", 1)[-1], tone)}</div>'
+        for src, (label, tone) in statuses.items()) + "</div>")
+    for src, (label, _) in statuses.items():
         if label.endswith("needs security code"):
             c.mfa_box(src, refresh.SOURCES[src])
 

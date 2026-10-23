@@ -30,7 +30,7 @@ st.caption("Card names and last digits only. Never enter a full card number here
 
 for card in cards_config():
     base = yaml_by_id[card["id"]]
-    with st.container(border=True):
+    with st.container(border=True, key=f"card-{card['id']}"):
         st.subheader(card["name"])
         st.caption(f"{card['issuer']} · {card.get('offers_program') or 'No offers program'}")
         with st.form(f"card-{card['id']}", border=False):
