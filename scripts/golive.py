@@ -89,6 +89,9 @@ def main() -> None:
         env = {**os.environ, "DATABASE_URL": v["DATABASE_URL"]}
         subprocess.run([PY, "-m", "alembic", "upgrade", "head"], cwd=ROOT, env=env, check=True)
 
+    alt = Path.home() / ".gh-config"  # used when ~/.config isn't writable
+    if alt.exists():
+        os.environ.setdefault("GH_CONFIG_DIR", str(alt))
     gh = shutil.which("gh")
     if gh and subprocess.run([gh, "auth", "status"], capture_output=True).returncode == 0:
         for k in GH_KEYS:
