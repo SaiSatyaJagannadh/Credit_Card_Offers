@@ -45,8 +45,9 @@ def remove_login(bank: str) -> None:
 def start_sync(bank: str) -> None:
     log = Path.home() / "Library" / "Logs" / f"card-offers-{bank}.log"
     log.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.Popen([sys.executable, "-m", "robot.runner", "--once", "--bank", bank,
-                      "--headed"], cwd=ROOT, stdout=log.open("a"), stderr=subprocess.STDOUT)
+    with log.open("a") as out:  # the child keeps its own copy of the handle
+        subprocess.Popen([sys.executable, "-m", "robot.runner", "--once", "--bank", bank,
+                          "--headed"], cwd=ROOT, stdout=out, stderr=subprocess.STDOUT)
 
 
 st.title("Card Offers helper")
@@ -90,7 +91,9 @@ for bank, name in BANKS.items():
                         st.rerun()
         else:
             x, y = st.columns(2)
-            if x.button("Sync now", key=f"sync-{bank}", type="primary", width="stretch",
+            busy = bool(run and run.status in ("running", "needs_code"))
+            if x.button("Syncing…" if busy else "Sync now", key=f"sync-{bank}",
+                        type="primary", width="stretch", disabled=busy,
                         help="Opens a browser window and logs in as you"):
                 start_sync(bank)
                 st.info(f"A browser window is opening for {name}. If the bank asks for a "

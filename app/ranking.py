@@ -18,6 +18,13 @@ def quarter_key(on: date) -> str:
     return f"{on.year}Q{(on.month - 1) // 3 + 1}"
 
 
+def quarter_label(key: str) -> str:
+    """"2026Q4" -> "Oct–Dec 2026"."""
+    year, q = key.split("Q")
+    months = ["Jan–Mar", "Apr–Jun", "Jul–Sep", "Oct–Dec"][int(q) - 1]
+    return f"{months} {year}"
+
+
 def period_start(period: str, on: date) -> date:
     if period == "year":
         return date(on.year, 1, 1)

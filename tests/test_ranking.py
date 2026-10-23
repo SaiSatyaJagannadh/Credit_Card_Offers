@@ -77,3 +77,7 @@ def test_amex_best_card_and_dedupe_key():
     k1 = ranking.dedupe_key("American Express", "amex_bce", "Dell ", date(2026, 10, 31), "fixed:60")
     k2 = ranking.dedupe_key("american express", "amex_bce", "dell", date(2026, 10, 31), "fixed:60")
     assert k1 == k2
+
+
+def test_quarter_label():
+    assert ranking.quarter_label("2026Q4") == "Oct–Dec 2026"

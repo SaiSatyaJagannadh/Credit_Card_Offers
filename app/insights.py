@@ -137,17 +137,21 @@ def todos(s: Session, on: date | None = None) -> list[Todo]:
     for src in ("amex", "bofa", "wellsfargo"):
         run = latest_sync(s, src)
         if run and run.status == "needs_code":
-            out.append(Todo(f"mfa:{run.id}", f"Enter {src} security code",
+            name = {"amex": "Amex", "bofa": "Bank of America", "wellsfargo": "Wells Fargo"}[src]
+            out.append(Todo(f"mfa:{run.id}", f"Enter your {name} security code",
                             "The bank robot is waiting for a code", "", "mfa"))
     q = ranking.quarter_key(on)
     disc = cards.get("discover_it")
     if disc and (rot := disc.get("rotating", {}).get(q)) and not rot.get("activated"):
         out.append(Todo(f"activate:{q}", "Activate Discover 5%",
-                        f"{q}: {', '.join(rot['categories'])}", disc.get("offers_url") or "",
+                        f"{ranking.quarter_label(q)}: "
+                        f"{', '.join(x.replace('_', ' ') for x in rot['categories'])}",
+                        disc.get("offers_url") or "",
                         "activate"))
     if "bofa_ccr" in cards:
         out.append(Todo(f"bofa_choice:{on:%Y-%m}", "Review BofA 3% category",
-                        f"Currently: {cards['bofa_ccr'].get('choice_category')}",
+                        f"Currently: {(cards['bofa_ccr'].get('choice_category') or '')
+                                      .replace('_', ' ')}",
                         cards["bofa_ccr"].get("offers_url") or "", "review"))
     cutoff = on - timedelta(days=settings_config()["inactive_card_days"])
     used = set(s.scalars(select(Transaction.card_id).where(Transaction.date >= cutoff)))

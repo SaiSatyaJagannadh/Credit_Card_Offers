@@ -27,14 +27,14 @@ def request_refresh() -> list[str]:
     try:
         with session() as s:
             s.add(RefreshRequest(source="all"))
-        msgs.append("Banks: refresh requested. Your home computer picks it up within "
-                    "2 minutes if it is on.")
+        msgs.append("Banks: sync requested. Your Mac picks it up within 2 minutes if it's "
+                    "on and automatic sync is turned on in the Card Offers Helper.")
     except Exception as e:
         msgs.append(f"Banks: could not save the refresh request ({type(e).__name__}).")
     token, repo = secret("GITHUB_TOKEN"), secret("GITHUB_REPO")
     if not token or not repo:
-        msgs.append("Gmail: GITHUB_TOKEN and GITHUB_REPO are not set in secrets, so the "
-                    "Gmail sync can't be started from here (it still runs every hour).")
+        msgs.append("Gmail: checks every hour by itself. Starting it from here needs the "
+                    "GitHub token (Get started, Refresh now button).")
         return msgs
     url = f"https://api.github.com/repos/{repo}/actions/workflows/hourly.yml/dispatches"
     try:

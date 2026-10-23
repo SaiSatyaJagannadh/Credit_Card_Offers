@@ -32,7 +32,9 @@ def turn_on() -> None:
         path = AGENTS / f"{label}.plist"
         subprocess.run(["launchctl", "unload", str(path)], capture_output=True)
         path.write_bytes(plistlib.dumps(_plist(label, job)))
-        subprocess.run(["launchctl", "load", str(path)], check=True, capture_output=True)
+        r = subprocess.run(["launchctl", "load", str(path)], capture_output=True, text=True)
+        if r.returncode:
+            raise RuntimeError(r.stderr.strip() or f"launchctl load failed for {label}")
 
 
 def turn_off() -> None:
