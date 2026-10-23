@@ -6,15 +6,13 @@ from app import db, refresh
 from app.config import cards_config
 from app.ui import components as c
 
-ROBOT_BANK = {"amex": "amex", "bofa": "bofa", "wellsfargo": "wellsfargo"}
-
 with db.session() as s:
     statuses = refresh.source_status(s)
     runs = {src: db.latest_sync(s, src) for src in refresh.SOURCES}
 
 st.title("Accounts")
-st.caption("Banks are read by the robot on your Mac; your bank passwords stay in your Mac's "
-           "Keychain and never reach this app.")
+st.caption("Your banks are read by the Card Offers Helper on your Mac. Your bank "
+           "passwords stay in your Mac's Keychain and never reach this app.")
 
 st.subheader("Banks")
 for src in refresh.BANKS:
@@ -30,10 +28,8 @@ for src in refresh.BANKS:
         if run and run.status == "needs_code":
             c.mfa_box(src, refresh.SOURCES[src])
         elif not run:
-            st.caption("Not connected yet. On your Mac, in the project folder, run:")
-            st.code(f".venv/bin/python -m robot.setup {ROBOT_BANK[src]}\n"
-                    f".venv/bin/python -m robot.runner --once --bank {ROBOT_BANK[src]} --headed",
-                    language="bash")
+            st.caption("Not connected yet. On your Mac, double-click Card Offers Helper in "
+                       "the project folder and save your login there.")
 
 st.subheader("Gmail")
 with st.container(border=True, key="card-gmail"):
@@ -45,8 +41,8 @@ with st.container(border=True, key="card-gmail"):
                         + (f" · {run.message[:200]}" if run.message else "")))
     if hint := refresh.gmail_hint(run):
         st.warning(hint)
-    st.caption("Checked every hour. Forward bank emails from your other Gmail accounts to "
-               "this inbox (README: Forward bank emails).")
+    st.caption("Checked every hour. If your banks email a different Gmail address, set "
+               "that account to forward bank emails to this inbox.")
 
 st.subheader("Cards")
 st.html(c.bullet_list([
